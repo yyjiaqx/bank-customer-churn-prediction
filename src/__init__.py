@@ -1,4 +1,5 @@
-﻿"""
-Telco Customer Churn Prediction — Package Init
+﻿# -*- coding: utf-8 -*-
+"""
+电信客户流失预测 — 包初始化
 """
 __version__ = "1.0.0"

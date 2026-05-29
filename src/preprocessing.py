@@ -1,6 +1,7 @@
-﻿"""
-Telco Customer Churn — Preprocessing Pipeline
-Handles: ID removal, TotalCharges cleaning, encoding, scaling, train/test split.
+﻿# -*- coding: utf-8 -*-
+"""
+电信客户流失预测 — 预处理管线
+处理：ID 删除、TotalCharges 清洗、编码、标准化、训练/测试集划分。
 """
 import numpy as np
 import pandas as pd
@@ -10,56 +11,58 @@ import os
 
 
 def clean_total_charges(df):
-    """Convert TotalCharges from object to float, handling empty strings."""
+    """将 TotalCharges 从 object 转为 float，空字符串填 0。"""
     df = df.copy()
-    # Convert to numeric, empty strings become NaN
+    # 转数值，空字符串变 NaN
     df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
     nan_count = df['TotalCharges'].isnull().sum()
     if nan_count > 0:
-        print(f"[INFO] TotalCharges: {nan_count} NaN values (tenure=0 customers) → filled with 0")
+        print(f"[信息] TotalCharges: {nan_count} 个空值（tenure=0 的新客户）→ 填充为 0")
         df['TotalCharges'] = df['TotalCharges'].fillna(0.0)
     return df
 
 
 def preprocess(df, random_state=42):
-    """Full preprocessing pipeline for the Telco Churn dataset.
+    """完整的预处理管线。
 
-    Steps:
-    1. Drop 'customerID'
-    2. Clean 'TotalCharges' (string → float, NaN → 0)
-    3. Encode target 'Churn' (Yes=1, No=0)
-    4. Label-encode binary categorical features
-    5. One-Hot encode multi-category features
-    6. StandardScaler on numeric features
-    7. Train/test split (80/20, stratified)
+    步骤:
+    1. 删除 'customerID'
+    2. 清洗 'TotalCharges'（string → float，NaN → 0）
+    3. 编码目标变量 'Churn'（Yes=1, No=0）
+    4. Label-Encode 二分类特征
+    5. One-Hot Encode 多分类特征
+    6. StandardScaler 标准化数值特征
+    7. 训练/测试集 8:2 分层划分
 
-    Parameters
+    参数
     ----------
     df : pd.DataFrame
-        Raw dataset.
+        原始数据集。
     random_state : int
-        Random seed.
+        随机种子。
 
-    Returns
+    返回
     -------
     X_train, X_test : np.ndarray
     y_train, y_test : np.ndarray
     feature_names : list
+        预处理后的特征名列表。
     """
     data = df.copy()
 
-    # Step 1: Drop ID
+    # 步骤 1：删除 ID 列
     data.drop('customerID', axis=1, inplace=True)
-    print("[INFO] Dropped 'customerID'")
+    print("[信息] 已删除 'customerID'")
 
-    # Step 2: Clean TotalCharges
+    # 步骤 2：清洗 TotalCharges
     data = clean_total_charges(data)
 
-    # Step 3: Encode target
+    # 步骤 3：编码目标变量
     data['Churn'] = data['Churn'].map({'Yes': 1, 'No': 0})
-    print(f"[INFO] Target 'Churn' encoded: {data['Churn'].sum()} churners")
+    print(f"[信息] 目标变量 'Churn' 已编码: {data['Churn'].sum()} 个流失客户")
 
-    # Step 4: Label-encode binary categorical features
+    # 步骤 4：Label-Encode 二分类特征
+    # "No internet service" / "No phone service" 等价于 No，统一编码为 0
     binary_mappings = {
         'gender': {'Male': 1, 'Female': 0},
         'Partner': {'Yes': 1, 'No': 0},
@@ -78,36 +81,31 @@ def preprocess(df, random_state=42):
     for col, mapping in binary_mappings.items():
         data[col] = data[col].map(mapping)
         encoded_binary.append(col)
-    print(f"[INFO] Label-encoded {len(encoded_binary)} binary features")
+    print(f"[信息] 已 Label-Encode {len(encoded_binary)} 个二分类特征")
 
-    # Step 5: One-Hot encode multi-category features
+    # 步骤 5：One-Hot Encode 多分类特征
     multi_cat_cols = ['InternetService', 'Contract', 'PaymentMethod']
     data = pd.get_dummies(data, columns=multi_cat_cols, drop_first=False, dtype=np.float64)
-    print(f"[INFO] One-Hot encoded: {multi_cat_cols}")
+    print(f"[信息] 已 One-Hot Encode: {multi_cat_cols}")
 
-    # Identify numeric columns for scaling
-    numeric_cols = ['tenure', 'MonthlyCharges', 'TotalCharges', 'SeniorCitizen']
-    # Add the binary encoded columns (they are now 0/1 numeric)
-    numeric_cols += encoded_binary
-
-    # Step 6: StandardScaler
+    # 步骤 6：StandardScaler 标准化
     feature_cols = [c for c in data.columns if c != 'Churn']
     scaler = StandardScaler()
     data[feature_cols] = scaler.fit_transform(data[feature_cols])
-    print(f"[INFO] StandardScaler applied to {len(feature_cols)} features")
+    print(f"[信息] StandardScaler 已应用于 {len(feature_cols)} 个特征")
 
-    # Split
+    # 拆分特征与目标
     X = data.drop('Churn', axis=1).values
     y = data['Churn'].values
     final_feature_names = data.drop('Churn', axis=1).columns.tolist()
 
-    # Step 7: Train/test split
+    # 步骤 7：训练/测试集划分（80/20，分层抽样）
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=random_state, stratify=y
     )
     churn_train = np.sum(y_train)
     churn_test = np.sum(y_test)
-    print(f"[INFO] Train: {X_train.shape[0]} samples, churn: {churn_train} ({churn_train/len(y_train)*100:.1f}%)")
-    print(f"[INFO] Test:  {X_test.shape[0]} samples, churn: {churn_test} ({churn_test/len(y_test)*100:.1f}%)")
+    print(f"[信息] 训练集: {X_train.shape[0]} 样本，流失: {churn_train} ({churn_train/len(y_train)*100:.1f}%)")
+    print(f"[信息] 测试集: {X_test.shape[0]} 样本，流失: {churn_test} ({churn_test/len(y_test)*100:.1f}%)")
 
     return X_train, X_test, y_train, y_test, final_feature_names
