@@ -103,43 +103,48 @@ python main.py
 
 ## 📈 结果解读
 
-### 模型性能对比
-
-> 以下为 Logistic Regression 基线结果（未启用 SMOTE）。RF/XGBoost + SMOTE 需运行 `python main.py` 更新。
+### 模型性能对比（SMOTE 平衡后，测试集 1,409 样本）
 
 | 模型 | Accuracy | Precision | Recall | F1-Score | ROC-AUC |
 |------|----------|-----------|--------|----------|---------|
-| Logistic Regression | 80.48% | 65.62% | 55.61% | 0.6020 | 0.8411 |
-| Random Forest | （运行后更新） | — | — | — | — |
-| XGBoost | （运行后更新） | — | — | — | — |
+| Logistic Regression 🏆 | 73.46% | 50.00% | **79.14%** | 0.6128 | **0.8403** |
+| Random Forest | 76.79% | 55.75% | 60.96% | 0.5824 | 0.8287 |
+| XGBoost | 78.14% | 58.55% | 60.43% | 0.5947 | 0.8275 |
+
+> **LR 召回率最优**（79.14%），适合"宁可多预警、不能漏客户"的流失挽留场景。对比无 SMOTE 的旧版 LR（Recall 55.61%），SMOTE 提升了 23.5 个百分点。
 
 ### 混淆矩阵（Logistic Regression）
 
 ```
               预测留存  预测流失
-实际留存        926      109
-实际流失        166      208
+实际留存        739      296
+实际流失         78      296
 ```
 
-- TP=208, FP=109, FN=166, TN=926
-- 假阴性 FN=166：漏判的流失客户（SMOTE + RF/XGBoost 预期大幅改善）
+- TP=296, FP=296, FN=78, TN=739
+- 374 个真实流失客户中，成功识别 296 个（79.14%），漏判 78 个
 
-### 特征重要性 Top 10（Logistic Regression 系数）
+### 特征重要性（Random Forest）
 
-| 排名 | 特征 | 系数 | 胜率比 | 方向 |
-|------|------|------|--------|------|
-| 1 | MonthlyCharges | -2.158 | 0.116 | ↓ 降低流失 |
-| 2 | tenure | -1.300 | 0.273 | ↓ 降低流失 |
-| 3 | InternetService_No | -1.198 | 0.302 | ↓ 降低流失 |
-| 4 | InternetService_Fiber optic | +1.132 | 3.103 | ↑ 增加流失 |
-| 5 | TotalCharges | +0.575 | 1.777 | ↑ 增加流失 |
-| 6 | StreamingMovies | +0.455 | 1.577 | ↑ 增加流失 |
-| 7 | StreamingTV | +0.454 | 1.575 | ↑ 增加流失 |
-| 8 | Contract_Two year | -0.324 | 0.723 | ↓ 降低流失 |
-| 9 | MultipleLines | +0.317 | 1.373 | ↑ 增加流失 |
-| 10 | Contract_Month-to-month | +0.306 | 1.358 | ↑ 增加流失 |
+| 排名 | 特征 | 重要性 |
+|------|------|--------|
+| 1 | tenure | 0.1297 |
+| 2 | MonthlyCharges | 0.1211 |
+| 3 | Contract_Month-to-month | 0.1192 |
+| 4 | TotalCharges | 0.1181 |
+| 5 | Contract_Two year | 0.0507 |
 
-> **Odds Ratio 解读：** InternetService_Fiber optic 的 Odds Ratio=3.10，即光纤用户流失胜率是非光纤用户的 3.1 倍。tenure 的 Odds Ratio=0.27，在网时长每增 1 标准差，流失胜率降低 73%。
+### 特征重要性（XGBoost）
+
+| 排名 | 特征 | 重要性 |
+|------|------|--------|
+| 1 | Contract_Month-to-month | 0.4792 |
+| 2 | InternetService_Fiber optic | 0.1700 |
+| 3 | InternetService_No | 0.0316 |
+| 4 | Contract_One year | 0.0299 |
+| 5 | StreamingMovies | 0.0239 |
+
+> XGBoost 将 48% 的重要性集中在「月付合同」上，与 EDA 发现的月付流失率 42.7% 高度吻合。
 
 ### EDA 关键发现
 
@@ -180,7 +185,7 @@ jupyter>=1.0.0
 
 ## 📝 简历描述参考
 
-> 独立完成电信客户流失预测项目，对 7,043 条客户数据进行数据清洗与 EDA 分析（10+ 张可视化图表），通过 SMOTE 处理类别不平衡，对比 Logistic Regression、Random Forest、XGBoost 三种模型并 GridSearchCV 调优，LR 基线 ROC-AUC 0.8411，结合系数、特征重要性与 SHAP 进行可解释性分析，识别出合同类型、互联网服务、支付方式为流失核心驱动因素，输出 5 条可落地的客户挽留策略。
+> 独立完成电信客户流失预测项目，对 7,043 条客户数据进行清洗与 EDA 分析，通过 SMOTE 处理类别不平衡，对比 LR / RF / XGBoost 三种模型 + 5 折 GridSearchCV 调优，LR + SMOTE 召回率提升至 79.14%（较基线 +23.5pp），结合特征重要性与 SHAP 进行可解释性分析，输出分层挽留策略。
 
 ## 📄 License
 

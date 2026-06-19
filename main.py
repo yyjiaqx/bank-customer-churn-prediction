@@ -140,7 +140,7 @@ def main():
     print(ranked[['Accuracy', 'Precision', 'Recall', 'F1-Score', 'ROC-AUC']].to_string())
 
     best_auc = ranked.iloc[0]['ROC-AUC']
-    print(f"\n  🏆 最佳模型: {best_model_name} (ROC-AUC = {best_auc:.4f})")
+    print(f"\n  [Best] 最佳模型: {best_model_name} (ROC-AUC = {best_auc:.4f})")
     print(f"\n  图表和结果已保存至: {OUTPUT_DIR}/")
     print("=" * 60)
 
