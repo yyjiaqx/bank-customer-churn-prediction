@@ -1,19 +1,19 @@
 ﻿# -*- coding: utf-8 -*-
 """
 电信客户流失预测 — 预处理管线
-处理：ID 删除、TotalCharges 清洗、编码、标准化、训练/测试集划分。
+处理：ID 删除、TotalCharges 清洗、编码、标准化、SMOTE过采样、训练/测试集划分。
 """
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
 import os
 
 
 def clean_total_charges(df):
     """将 TotalCharges 从 object 转为 float，空字符串填 0。"""
     df = df.copy()
-    # 转数值，空字符串变 NaN
     df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
     nan_count = df['TotalCharges'].isnull().sum()
     if nan_count > 0:
@@ -62,7 +62,6 @@ def preprocess(df, random_state=42):
     print(f"[信息] 目标变量 'Churn' 已编码: {data['Churn'].sum()} 个流失客户")
 
     # 步骤 4：Label-Encode 二分类特征
-    # "No internet service" / "No phone service" 等价于 No，统一编码为 0
     binary_mappings = {
         'gender': {'Male': 1, 'Female': 0},
         'Partner': {'Yes': 1, 'No': 0},
@@ -109,3 +108,31 @@ def preprocess(df, random_state=42):
     print(f"[信息] 测试集: {X_test.shape[0]} 样本，流失: {churn_test} ({churn_test/len(y_test)*100:.1f}%)")
 
     return X_train, X_test, y_train, y_test, final_feature_names
+
+
+def apply_smote(X_train, y_train, random_state=42):
+    """对训练集应用 SMOTE 过采样以平衡类别。
+
+    参数
+    ----------
+    X_train : np.ndarray
+    y_train : np.ndarray
+    random_state : int
+
+    返回
+    -------
+    X_train_resampled : np.ndarray
+    y_train_resampled : np.ndarray
+    """
+    print("\n" + "=" * 60)
+    print("  SMOTE 过采样 — 处理类别不平衡")
+    print("=" * 60)
+    before = dict(zip(*np.unique(y_train, return_counts=True)))
+    print(f"  过采样前: 未流失={before.get(0,0)}, 流失={before.get(1,0)}, 比例={before.get(1,0)/len(y_train)*100:.1f}%")
+
+    smote = SMOTE(random_state=random_state)
+    X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
+
+    after = dict(zip(*np.unique(y_resampled, return_counts=True)))
+    print(f"  过采样后: 未流失={after.get(0,0)}, 流失={after.get(1,0)}, 比例={after.get(1,0)/len(y_resampled)*100:.1f}%")
+    return X_resampled, y_resampled

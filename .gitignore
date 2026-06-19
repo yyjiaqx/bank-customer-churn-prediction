@@ -1,36 +1,5 @@
-﻿# Python
-__pycache__/
-*.py[cod]
+﻿__pycache__/
+*.pyc
 *.pyo
-*.egg-info/
-dist/
-build/
-
-# Jupyter Notebook
 .ipynb_checkpoints/
-*.ipynb_checkpoints*
-
-# Virtual Environment
-venv/
-env/
-.venv/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Output figures (generated at runtime)
 outputs/figures/*.png
-
-# Data (users download from Kaggle)
-data/Churn_Modelling.csv
-
-# Jupyter notebook outputs (keep clean for git)
-# Uncomment the line below if you want to strip outputs:
-# *.ipynb filter=strip-notebook-output
