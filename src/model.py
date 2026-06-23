@@ -2,7 +2,7 @@
 """
 电信客户流失预测 — 模型训练
 支持 Logistic Regression、Random Forest、XGBoost 三种模型，
-含 GridSearchCV 调参、系数分析、特征重要性分析。
+含 GridSearchCV 调参、系数分析、特征重要性、SHAP 可解释性分析。
 """
 import numpy as np
 import pandas as pd
